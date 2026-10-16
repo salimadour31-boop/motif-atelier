@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Motif Atelier — générateur de motifs répétables sans raccord</title>
+<meta name="description" content="Générez des motifs répétables sans raccord (tuiles) dans le navigateur : grille, demi-chute, brique, miroir, rotation, hexagonal, semis. Export SVG, PNG, CSS et JSON. Libre et gratuit.">
+<meta name="theme-color" content="#14182a">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2314182a'/%3E%3Cpath d='M4 4h12A12 12 0 0 1 4 16z' fill='%23f2b134'/%3E%3Cpath d='M28 16A12 12 0 0 1 16 4h12z' fill='%2336c2b4'/%3E%3Cpath d='M4 28V16a12 12 0 0 1 12 12z' fill='%2336c2b4'/%3E%3Cpath d='M28 28H16a12 12 0 0 1 12-12z' fill='%23f2b134'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand">
+    <!-- Logo original : quatre quarts de disque formant une tuile -->
+    <svg viewBox="0 0 32 32" width="34" height="34" aria-hidden="true">
+      <rect width="32" height="32" rx="7" fill="#1d2340"/>
+      <path d="M4 4h12A12 12 0 0 1 4 16z" fill="#f2b134"/>
+      <path d="M28 16A12 12 0 0 1 16 4h12z" fill="#36c2b4"/>
+      <path d="M4 28V16a12 12 0 0 1 12 12z" fill="#36c2b4"/>
+      <path d="M28 28H16a12 12 0 0 1 12-12z" fill="#f2b134"/>
+    </svg>
+    <div>
+      <h1>Motif Atelier</h1>
+      <p class="tag" data-i18n="tagline">Motifs et tuiles sans raccord pour graphistes, 100 % dans le navigateur</p>
+    </div>
+  </div>
+  <label class="lang">
+    <span class="sr" data-i18n="language">Langue</span>
+    <select id="lang" data-i18n-aria="language" aria-label="Langue">
+      <option value="fr">Français</option>
+      <option value="en">English</option>
+      <option value="kab">Taqbaylit</option>
+    </select>
+  </label>
+</header>
+
+<main class="layout">
+  <section class="stage" aria-labelledby="canvasTitle">
+    <h2 id="canvasTitle" class="sr" data-i18n="canvasLabel">Aperçu du motif répété</h2>
+
+    <div class="toolbar">
+      <button class="btn" id="btnSurprise" type="button" data-i18n="surprise">Surprise !</button>
+      <button class="btn ghost" id="btnReroll" type="button" data-i18n="reroll">Nouvelle graine</button>
+      <label class="check inline">
+        <input type="checkbox" id="bounds">
+        <span data-i18n="showBounds">Afficher les limites de la tuile</span>
+      </label>
+      <label class="zoom">
+        <span data-i18n="zoom">Zoom de l'aperçu</span>
+        <input type="range" id="zoom" min="0.25" max="2" step="0.05" value="1">
+        <output id="outZoom">100 %</output>
+      </label>
+    </div>
+
+    <div class="canvas-wrap">
+      <canvas id="view" role="img" data-i18n-aria="canvasLabel" aria-label="Aperçu du motif répété"></canvas>
+    </div>
+    <p class="note" data-i18n="seamless">Tuile vérifiée sans raccord : les formes qui touchent un bord sont reportées sur le bord opposé.</p>
+
+    <h2 data-i18n="exportTitle">Exporter</h2>
+    <div class="export">
+      <button class="btn" id="btnSvg" type="button" data-i18n="exportSvg">Tuile SVG</button>
+      <div class="combo">
+        <button class="btn ghost" id="btnTile" type="button" data-i18n="exportTile">Tuile PNG</button>
+        <select id="tileScale" data-i18n-aria="tileScale" aria-label="Échelle de la tuile PNG">
+          <option value="1">×1</option>
+          <option value="2" selected>×2</option>
+          <option value="4">×4</option>
+        </select>
+      </div>
+      <div class="combo">
+        <button class="btn ghost" id="btnLarge" type="button" data-i18n="exportLarge">Grand PNG répété</button>
+        <select id="largeSize" data-i18n-aria="largeSize" aria-label="Format du grand PNG">
+          <option value="1920x1080">1920 × 1080</option>
+          <option value="2560x1440">2560 × 1440</option>
+          <option value="3840x2160">3840 × 2160</option>
+          <option value="3000x3000" selected>3000 × 3000</option>
+          <option value="1080x1080">1080 × 1080</option>
+          <option value="1080x1920">1080 × 1920</option>
+          <option value="custom" data-i18n="custom">Personnalisé</option>
+        </select>
+      </div>
+      <div class="custom-size" id="customSize" hidden>
+        <label><span data-i18n="width">Largeur</span> <input type="number" id="customW" min="16" max="8000" value="2400"></label>
+        <label><span data-i18n="height">Hauteur</span> <input type="number" id="customH" min="16" max="8000" value="1600"></label>
+      </div>
+    </div>
+    <div class="export">
+      <button class="btn ghost" id="btnJson" type="button" data-i18n="exportJson">Exporter JSON</button>
+      <label class="btn ghost">
+        <input type="file" id="fileJson" accept="application/json,.json" hidden>
+        <span data-i18n="importJson">Importer JSON</span>
+      </label>
+      <button class="btn ghost" id="btnLink" type="button" data-i18n="copyLink">Copier le lien de partage</button>
+    </div>
+
+    <details class="css-box">
+      <summary data-i18n="cssTitle">Fond CSS (data URI)</summary>
+      <textarea id="cssOut" readonly rows="6" spellcheck="false" data-i18n-aria="cssTitle" aria-label="Fond CSS (data URI)"></textarea>
+      <button class="btn ghost" id="btnCss" type="button" data-i18n="copyCss">Copier le CSS</button>
+    </details>
+
+    <p class="note" data-i18n="privacy">Rien n'est envoyé : tout est calculé sur votre appareil. Réglages mémorisés localement.</p>
+  </section>
+
+  <aside class="panel" data-i18n-aria="settings" aria-label="Réglages">
+    <fieldset>
+      <legend data-i18n="structure">Répétition</legend>
+      <label class="ctl">
+        <span class="ctl-head"><span data-i18n="mode">Mode de répétition</span></span>
+        <select id="mode">
+          <option value="grid" data-i18n="mode_grid">Grille simple</option>
+          <option value="halfdrop" data-i18n="mode_halfdrop">Demi-chute (half-drop)</option>
+          <option value="brick" data-i18n="mode_brick">Brique</option>
+          <option value="mirror" data-i18n="mode_mirror">Miroir</option>
+          <option value="rotate4" data-i18n="mode_rotate4">Rotation × 4</option>
+          <option value="hex" data-i18n="mode_hex">Réseau hexagonal</option>
+          <option value="scatter" data-i18n="mode_scatter">Semis aléatoire</option>
+        </select>
+      </label>
+      <label class="ctl">
+        <span class="ctl-head"><span data-i18n="tileSize">Taille de la tuile (px)</span><output id="outTile"></output></span>
+        <input type="range" id="tile" min="64" max="800" step="8" value="240">
+      </label>
+      <label class="ctl">
+        <span class="ctl-head"><span data-i18n="count">Densité</span><output id="outCount"></output></span>
+        <input type="range" id="count" min="1" max="40" step="1" value="5">
+      </label>
+      <div class="seed-row">
+        <label class="ctl grow">
+          <span class="ctl-head"><span data-i18n="seed">Graine</span></span>
+          <input type="text" id="seed" maxlength="64" autocomplete="off" spellcheck="false">
+        </label>
+        <button class="btn ghost icon" id="btnReroll2" type="button" data-i18n-title="reroll" data-i18n-aria="reroll" title="Nouvelle graine" aria-label="Nouvelle graine">🎲</button>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend data-i18n="shapes">Formes</legend>
+      <div class="shapes" id="shapes"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend data-i18n="style">Rendu</legend>
+      <label class="ctl">
+        <span class="ctl-head"><span data-i18n="sizeMin">Taille min.</span><output id="outSizeMin"></output></span>
+        <input type="range" id="sizeMin" min="1" max="60" step="1" value="8">
+      </label>
+      <label class="ctl">
+        <span class="ctl-head"><span data-i18n="sizeMax">Taille max.</span><output id="outSizeMax"></output></span>
+        <input type="range" id="sizeMax" min="1" max="60" step="1" value="22">
+      </label>
+      <label class="ctl">
+        <span class="ctl-head"><span data-i18n="rotBase">Rotation de base</span><output id="outRotBase"></output></span>
+        <input type="range" id="rotBase" min="0" max="360" step="5" value="0">
+      </label>
+      <label class="ctl">
+        <span class="ctl-head"><span data-i18n="jitter">Variation de rotation ±</span><output id="outJitter"></output></span>
+        <input type="range" id="jitter" min="0" max="180" step="5" value="40">
+      </label>
+      <div class="seg" role="radiogroup" data-i18n-aria="style" aria-label="Rendu">
+        <label><input type="radio" name="style" value="fill" checked><span data-i18n="style_fill">Plein</span></label>
+        <label><input type="radio" name="style" value="stroke"><span data-i18n="style_stroke">Contour</span></label>
+        <label><input type="radio" name="style" value="mix"><span data-i18n="style_mix">Mélange</span></label>
+      </div>
+      <label class="ctl">
+        <span class="ctl-head"><span data-i18n="strokeWidth">Épaisseur du contour</span><output id="outStroke"></output></span>
+        <input type="range" id="stroke" min="0.5" max="20" step="0.5" value="3">
+      </label>
+    </fieldset>
+
+    <fieldset>
+      <legend data-i18n="colors">Couleurs</legend>
+      <div class="colors" id="colors"></div>
+      <div class="row">
+        <button class="btn ghost small" id="btnAddColor" type="button" data-i18n="addColor">+ couleur</button>
+        <button class="btn ghost small" id="btnRemoveColor" type="button" data-i18n="removeColor">− couleur</button>
+        <button class="btn ghost small" id="btnRandPal" type="button" data-i18n="randomPalette">Palette au hasard</button>
+      </div>
+      <p class="sub" data-i18n="palettes">Palettes</p>
+      <div class="palettes" id="palettes"></div>
+    </fieldset>
+
+    <div class="row end">
+      <button class="btn ghost" id="btnReset" type="button" data-i18n="reset">Réinitialiser</button>
+    </div>
+  </aside>
+</main>
+
+<footer class="foot">
+  <span data-i18n="footer">Logiciel libre sous licence MIT.</span>
+  <a href="https://github.com/salimadour31-boop/motif-atelier" data-i18n="source">Code source</a>
+</footer>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="i18n.js"></script>
+<script src="motif.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
